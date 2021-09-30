@@ -1,0 +1,12 @@
+# A simple request to trigger a service.
+##################################################
+
+uint32 option  # some triggerables enumerate a switch of options (e.g. off/on)
+
+--------------------------------------------------
+
+# Response for the triggered service.
+##################################################
+
+bool success    # whether or not the service execution was deemed successful
+string details  # optional human-readable statement about the success or failure

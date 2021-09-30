@@ -1,0 +1,95 @@
+# Navigation parameters for the multirotor UAV.
+##################################################
+
+# Timing
+timestep: 0.01  # process model integration timestep and measurement fusion period, [s]
+filter_stamps: false  # whether or not to reject measurements stamped at times outside the current fusion period
+
+# Manages evolving and informing the belief state through time
+estimator:
+
+#########################
+
+  # Initial belief state
+  state0:
+
+    # Means
+    pos: [0, 0, 0]  # initial position in world-coordinates of the body-origin, [m]
+    vel: [0, 0, 0]  # initial velocity in body-coordinates of the body-origin relative to the world-frame, [m/s]
+    accel: [0, 0, 0]  # initial acceleration in body-coordinates of the body-origin relative to the world-frame, [m/s^2]
+    ori: {"w": 1, "x": 0, "y": -1, "z": 0}  # initial orientation of body-coordinates relative to world-coordinates
+    angvel: [0, 0, 0]  # initial angular velocity in body-coordinates of the body-frame relative to the world-frame, [rad/s]
+    bias_accel: [0, 0, 0]  # initial bias of the inertial acceleration input, [m/s^2]
+    bias_angvel: [0, 0, 0]  # initial bias of the inertial angular velocity input, [rad/s]
+    gravity: [0, 0, -9.80665]  # initial estimate of the local gravitational field in world-coordinates, [m/s^2]
+    wind: [0, 0, 0]  # initial velocity in world-coordinates of the local wind relative to the world-frame, [m/s]
+    pressure: 1e5  # initial barometric pressure of the local atmosphere, [Pa]
+
+    # Covariance specified by *standard-deviations* (sqrt of the covariance matrix's diagonal)
+    stdevs: [
+        30,   30,   10,  # pos_stdev, [m]
+         0,    0,    0,  # vel_stdev, [m/s]
+         0,    0,    0,  # accel_stdev, [m/s^2]
+       0.5,  0.5,  0.5,  # ori_stdev, [rad]
+         0,    0,    0,  # angvel_stdev, [rad/s]
+      1e-2, 1e-2, 1e-2,  # bias_accel_stdev, [m/s^2]
+      1e-3, 1e-3, 1e-3,  # bias_angvel_stdev, [rad/s]
+         0,    0,  0.5,  # gravity_stdev, [m/s^2]
+         0,    0,    0,  # wind_stdev, [m/s]
+                   1e4,  # pressure_stdev, [Pa]
+    ]
+
+#########################
+
+  # Process model with accel/angvel driven by an inertial measurement unit,
+  # biases/atmosphere on Brownian random walks, and inference via linearization (EKF)
+  process:
+    type: "IMU"
+
+    # Accelerometer parameters
+    accelerometer_rotmat: [[ 0, 0, 1],
+                           [ 0, 1, 0],
+                           [-1, 0, 0]]  # orientation of accelerometer-coordinates relative to body-coordinates as a rotation matrix
+    accelerometer_noise_covar: [[1e-2,    0,    0],
+                                [   0, 1e-2,    0],
+                                [   0,    0, 1e-2]]  # covariance of the accelerometer white noise (accounting for vibration), [(m/s^2)^2]
+    accelerometer_drift_covar: [[1e-7,    0,    0],
+                                [   0, 1e-7,    0],
+                                [   0,    0, 1e-7]]  # covariance of the accelerometer random walk (continuous-time), [(m/s^2)^2/s]
+
+    # Gyroscope parameters
+    gyroscope_rotmat: [[ 0, 0, 1],
+                       [ 0, 1, 0],
+                       [-1, 0, 0]]  # orientation of gyroscope-coordinates relative to body-coordinates as a rotation matrix
+    gyroscope_noise_covar: [[1e-3,    0,    0],
+                            [   0, 1e-3,    0],
+                            [   0,    0, 1e-3]]  # covariance of the gyroscope white noise, [(rad/s)^2]
+    gyroscope_drift_covar: [[1e-8,    0,    0],
+                            [   0, 1e-8,    0],
+                            [   0,    0, 1e-8]]  # covariance of the gyroscope random walk (continuous-time), [(rad/s)^2/s]
+
+    # Environment parameters
+    wind_drift_covar: [[0, 0, 0],
+                       [0, 0, 0],
+                       [0, 0, 0]]  # covariance of the wind random walk (continuous-time), [(m/s)^2/s]
+    pressure_drift_stdev: 2  # standard-deviation of the atmospheric pressure random walk (continuous-time), [Pa/s^(1/2)]
+    temperature: 280  # absolute thermal temperature of the local atmosphere (assumed uniform and constant), [K]
+
+#########################
+
+  # Information sources that will be fused into the belief state
+  informants:
+
+    # Sensor model for an offboard motion-capture system that tracks the pose of the body
+    motion_capture:
+      type: "MotionCapture"
+      # Origin parameters
+      pos_origin: [0, 0, 0]  # position in world-coordinates of the measurement pose-origin, [m]
+      ori_origin: {"w": 1, "x": 0, "y": 0, "z": 0}  # orientation of the measurement pose-origin relative to the world-coordinates
+      # Offset parameters
+      pos_offset: [0, 0, 0]  # position in body-coordinates of the tracked body-fixed point, [m]
+      ori_offset: {"w": 1, "x": 0, "y": 1, "z": 0}  # orientation of the mocap's assigned coordinates relative to the body-coordinates
+      # Noise parameters
+      noise_stdevs: [1e-4, 1e-4, 1e-4, 1e-2, 1e-2, 1e-2]  # standard-deviations of the measurement's additive white noise (translation then rotation) (crude loose-coupling assumption), [m, m, m, rad, rad, rad]
+
+#########################

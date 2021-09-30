@@ -1,0 +1,57 @@
+# Control parameters for the multirotor UAV.
+##################################################
+
+# Computes torques that reject attitude tracking error via adaptive feedback
+regulator:
+  # Physical parameters
+  inertia_matrix: [[1e-2,    0,    0],
+                   [   0, 1e-2,    0],
+                   [   0,    0, 1e-2]]  # inertia tensor expressed in body-coordinates about the center-of-mass, [kg*m^2]
+  # Tuning knobs
+  ori_feedback_gains:    [ 1,  3,  3]  # sensitivities to orientation error in body-coordinates, [1/s]
+  angvel_feedback_gains: [20, 20, 20]  # sensitivities to angular velocity error in body-coordinates, [1/s]
+  aerodamper_adaptive_gains:  [1e-6, 1e-6, 1e-6]  # learning-rates for the dissipative aerodynamic torque model in body-coordinates
+  disturbance_adaptive_gains: [1e-4, 1e-4, 1e-4]  # learning-rates for the exogenous or actuator-induced disturbance torque in body-coordinates, i.e. traditional integral gain
+
+#########################
+
+# Solves for an optimal allocation of actuator efforts to achieve a desired wrench
+allocator:
+  # Position in body-coordinates of the center-of-mass
+  com: [0, 0, 0]
+  # List of components that generate wrenches via eff*(c1+c2*|eff|)*[lin,ang+(cen-com)Xlin]
+  actuators:
+    - # (0) Front-left thruster
+      center: [0, 0.23, -0.23]  # position in body-coordinates of where the wrench is applied, [m]
+      linvec: [1, 0, 0]       # basis-vector in body-coordinates of the force part of the wrench
+      angvec: [+0.016, 0, 0]  # basis-vector in body-coordinates of the torque part of the wrench, [N*m/N]
+      coeff1: 6.88  # first-order positive coefficient for force from effort, [N/eff]
+      coeff2: 3.81  # second-order positive coefficient for force from effort, [N/eff^2]
+      mineff: 0  # minimum allowed effort
+      maxeff: 1  # maximum allowed effort
+    - # (1) Front-right thruster
+      center: [0, -0.23, -0.23]
+      linvec: [1, 0, 0]
+      angvec: [-0.016, 0, 0]
+      coeff1: 6.88
+      coeff2: 3.81
+      mineff: 0
+      maxeff: 1
+    - # (2) Back-right thruster
+      center: [0, -0.23, 0.23]
+      linvec: [1, 0, 0]
+      angvec: [+0.016, 0, 0]
+      coeff1: 6.88
+      coeff2: 3.81
+      mineff: 0
+      maxeff: 1
+    - # (3) Back-left thruster
+      center: [0, 0.23, 0.23]
+      linvec: [1, 0, 0]
+      angvec: [-0.016, 0, 0]
+      coeff1: 6.88
+      coeff2: 3.81
+      mineff: 0
+      maxeff: 1
+
+#########################

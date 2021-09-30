@@ -1,0 +1,49 @@
+# Request to track a given path.
+#
+# PARSING REQUIREMENTS:
+# If speed is positive, then timestep and times are ignored. Else, speed is ignored.
+# If timestep is positive, then times is ignored. Else, timestep is ignored.
+# If speed and timestep are not positive, then times must have the same size as path.
+# If times is nonempty, then it must start with zero and monotonically increase.
+# Path cannot be empty.
+#
+# Note: A lead-in from the current position is automatically prepended
+#       unless the path has only one point and speed is not provided.
+#
+##################################################
+
+# Nominal rate to track the path with (CONDITIONALLY OPTIONAL)
+float64 speed  # [m/s]
+
+# Uniform temporal spacing between the path points (CONDITIONALLY OPTIONAL)
+float64 timestep  # [s]
+
+# Timestamps for each point on the path (CONDITIONALLY OPTIONAL)
+float64[] times  # [s]
+
+# Positions in world-coordinates corresponding to each timestamp
+geometry_msgs/Point[] path  # [m]
+
+# Signed-index of the point along the path to wrap the end of the path back onto
+#
+# Examples:
+#     *  0 makes the whole path a loop (excluding any lead-in)
+#     *  1 is like 0 but the loop would exclude the first given point
+#     * -1 yields no looping
+#     * -2 loops the path back to the second-to-last point
+#     *  n causes rejection because n is out-of-bounds for an array of length n
+#
+int64 loop_index
+
+--------------------------------------------------
+
+# Response for path acceptance.
+##################################################
+
+uint32 issue
+string details
+
+# Enumeration for possible issues
+uint32 NONE=0    # accepted
+uint32 PARSE=1   # denied because the parsing requirements were violated
+uint32 BOUNDS=2  # denied because it requires out-of-bounds flight

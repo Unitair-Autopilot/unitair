@@ -1,0 +1,14 @@
+# Request to reload runtime-adjustable parameters from the optionally specified cfg subdirectory.
+##################################################
+
+# Full path to the directory containing the desired Unitair configuration YAML files
+# (if this string is left empty, the assumed-to-exist ROS-param "cfg_path" is used instead)
+string cfg_path
+
+--------------------------------------------------
+
+# Response for the parameter reload.
+##################################################
+
+bool success    # true if any parameters were reread successfully (even if the actual values are the same)
+string details  # information about what was successfully reread or why the attempt failed

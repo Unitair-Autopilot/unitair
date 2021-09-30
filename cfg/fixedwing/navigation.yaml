@@ -1,0 +1,126 @@
+# Navigation parameters for the fixed-wing UAV.
+##################################################
+
+# Timing
+timestep: 0.01  # process model integration timestep and measurement fusion period, [s]
+filter_stamps: false  # whether or not to reject measurements stamped at times outside the current fusion period
+
+# Manages evolving and informing the belief state through time
+estimator:
+
+#########################
+
+  # Initial belief state
+  state0:
+
+    # Means
+    pos: [0, 0, 0]  # initial position in world-coordinates of the body-origin, [m]
+    vel: [0, 0, 0]  # initial velocity in body-coordinates of the body-origin relative to the world-frame, [m/s]
+    accel: [0, 0, 0]  # initial acceleration in body-coordinates of the body-origin relative to the world-frame, [m/s^2]
+    ori: {"w": 1, "x": 0, "y": 0, "z": 0}  # initial orientation of body-coordinates relative to world-coordinates
+    angvel: [0, 0, 0]  # initial angular velocity in body-coordinates of the body-frame relative to the world-frame, [rad/s]
+    bias_accel: [0, 0, 0]  # initial bias of the inertial acceleration input, [m/s^2]
+    bias_angvel: [0, 0, 0]  # initial bias of the inertial angular velocity input, [rad/s]
+    gravity: [0, 0, -9.80665]  # initial estimate of the local gravitational field in world-coordinates, [m/s^2]
+    wind: [0, 0, 0]  # initial velocity in world-coordinates of the local wind relative to the world-frame, [m/s]
+    pressure: 1e5  # initial barometric pressure of the local atmosphere, [Pa]
+
+    # Covariance specified by *standard-deviations* (sqrt of the covariance matrix's diagonal)
+    stdevs: [
+        30,   30,   10,  # pos_stdev, [m]
+         0,    0,    0,  # vel_stdev, [m/s]
+         0,    0,    0,  # accel_stdev, [m/s^2]
+       0.1,  0.1,  0.1,  # ori_stdev, [rad]
+         0,    0,    0,  # angvel_stdev, [rad/s]
+      1e-3, 1e-3, 1e-3,  # bias_accel_stdev, [m/s^2]
+      1e-3, 1e-3, 1e-3,  # bias_angvel_stdev, [rad/s]
+         0,    0,  0.1,  # gravity_stdev, [m/s^2]
+         3,    3,  0.1,  # wind_stdev, [m/s]
+                   1e4,  # pressure_stdev, [Pa]
+    ]
+
+#########################
+
+  # Process model with accel/angvel driven by an inertial measurement unit,
+  # biases/atmosphere on Brownian random walks, and inference via linearization (EKF)
+  process:
+    type: "IMU"
+
+    # Accelerometer parameters
+    accelerometer_rotmat: [[1, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 1]]  # orientation of accelerometer-coordinates relative to body-coordinates as a rotation matrix
+    accelerometer_noise_covar: [[1e-2,    0,    0],
+                                [   0, 1e-2,    0],
+                                [   0,    0, 1e-2]]  # covariance of the accelerometer white noise (accounting for vibration), [(m/s^2)^2]
+    accelerometer_drift_covar: [[1e-7,    0,    0],
+                                [   0, 1e-7,    0],
+                                [   0,    0, 1e-7]]  # covariance of the accelerometer random walk (continuous-time), [(m/s^2)^2/s]
+
+    # Gyroscope parameters
+    gyroscope_rotmat: [[1, 0, 0],
+                       [0, 1, 0],
+                       [0, 0, 1]]  # orientation of gyroscope-coordinates relative to body-coordinates as a rotation matrix
+    gyroscope_noise_covar: [[1e-3,    0,    0],
+                            [   0, 1e-3,    0],
+                            [   0,    0, 1e-3]]  # covariance of the gyroscope white noise, [(rad/s)^2]
+    gyroscope_drift_covar: [[1e-8,    0,    0],
+                            [   0, 1e-8,    0],
+                            [   0,    0, 1e-8]]  # covariance of the gyroscope random walk (continuous-time), [(rad/s)^2/s]
+
+    # Environment parameters
+    wind_drift_covar: [[5e-2,    0,    0],
+                       [   0, 5e-2,    0],
+                       [   0,    0, 1e-3]]  # covariance of the wind random walk (continuous-time), [(m/s)^2/s]
+    pressure_drift_stdev: 2  # standard-deviation of the atmospheric pressure random walk (continuous-time), [Pa/s^(1/2)]
+    temperature: 280  # absolute thermal temperature of the local atmosphere (assumed uniform and constant), [K]
+
+#########################
+
+  # Information sources that will be fused into the belief state
+  informants:
+
+    # Sensor model for a loosely-coupled GPS receiver that treats ENU as world-coordinates
+    gps:
+      type: "GPS"
+      # Origin parameters
+      home_lat_deg: +42.551697  # latitude of the world-origin, [deg]
+      home_lon_deg: -72.014367  # longitude of the world-origin, [deg]
+      home_alt_m: 265  # altitude of the world-origin, [m]
+      # Offset parameters
+      pos_offset: [-0.08, +0.015, -0.06]  # position in body-coordinates of the GPS antenna, [m]
+      # Noise parameters
+      noise_stdevs: [0.01, 0.01, 0.1]  # standard-deviations of the measurement's additive white noise in world-coordinates (crude loose-coupling assumption), [m]
+
+    # Model for a three-axis magnetic field sensor
+    magnetometer:
+      type: "Magnetometer"
+      # Origin parameters
+      rotmat: [[1, 0, 0],
+               [0, 1, 0],
+               [0, 0, 1]]  # orientation of sensor-coordinates relative to body-coordinates as a rotation matrix
+      # Offset parameters
+      soft_distort: [[ 0.941, -0.198, -0.105],
+                     [-0.198,  0.877,  0.110],
+                     [-0.105,  0.110,  1.224]]  # soft-iron distortion matrix in sensor-coordinates
+      hard_distort: [-2.932e-05, -3.470e-05, -3.734e-05]  # hard-iron distortion vector in sensor-coordinates, [T]
+      # Noise parameters
+      noise_covar: [[1e-9,    0,    0],
+                    [   0, 1e-9,    0],
+                    [   0,    0, 1e-9]]  # covariance of the measurement's additive white noise (which must also account for calibration errors), [T^2]
+      # Environment parameters
+      field: [-04869.6e-9, +19706.9e-9, -47629.8e-9]  # reference external magnetic field in world-coordinates, [T]
+
+    # Model for a static air pressure sensor
+    barometer:
+      type: "Barometer"
+      noise_stdev: 0.15  # standard-deviation of the measurement's additive white noise, [Pa]
+
+    # Model for a Pitot-style (differential pressure) airspeed sensor
+    pitot:
+      ignore: false  # (for if you want to run a sensor but not use it)
+      type: "Pitot"
+      dir: [1, 0, 0]  # mounting direction in body-coordinates
+      noise_stdev: 5  # standard-deviation of the measurement's additive white noise, [m/s]
+
+#########################

@@ -1,0 +1,57 @@
+# User-interface and mission-specific parameters for the fixed-wing UAV.
+##################################################
+
+# Manages the system mode, health aggregation, command multiplexing, and failsafes
+manager:
+  failsafe_delay: 2  # how long to wait on lost connection before engaging a fail-safe, [s]
+  # Stabilized-manual parameters
+  throttle_style: "trigger"  # "stick" or "trigger"
+  attitude_style: "conventional"  # "conventional" or "copter"
+  thrust_range: 19.8  # [N]
+  roll_range: 90  # [deg]
+  pitch_range: 60  # [deg]
+  roll_rate: 180  # [deg/s]
+  pitch_rate: 120  # [deg/s]
+  yaw_rate: 60  # [deg/s]
+
+#########################
+
+# Publishes a ping from offboard to onboard for communications monitoring
+heartbeat:
+  rate: 5  # frequency of publication, [Hz]
+
+#########################
+
+# Relays Unitair messages in a visualizable form
+visualizer:
+  rate: 30  # frequency at which visualization messages are published, [Hz]
+  body_shape: [0.5, 0.2, 0.05]  # dimensions of a prism in body-coordinates to represent the body, [m]
+  plan_count: 100  # number of poses to display along the guidance plan
+
+#########################
+
+# Raw link between the joystick and the actuators for true manual flight
+passthrough:
+  channels:  # input names and shift/scale factors for each channel
+    - input: "right_stick_east"
+      shift:  0
+      scale: -1
+    - input: "right_stick_east"
+      shift:  0
+      scale: -1
+    - input: "right_stick_north"
+      shift:  0
+      scale: -1
+    - input: "left_stick_north"
+      shift: +1
+      scale: +0.5
+    - input: "left_stick_east"
+      shift:  0
+      scale: +1
+    - input: "left_stick_east"
+      shift:  0
+      scale: +1
+  failsafe: [1, 1, 0, 0, 0, 0]  # actuation efforts to use if joystick connection is lost
+  failtime: 2  # how long to wait on lost connection before doing failsafe, [s]
+
+#########################

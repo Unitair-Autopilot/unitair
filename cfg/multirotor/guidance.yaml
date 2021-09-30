@@ -1,0 +1,36 @@
+# Guidance parameters for the multirotor UAV.
+##################################################
+
+# Frequency at which the commands are published
+rate: 50  # [Hz]
+
+# Whether or not to include angular acceleration in the attitude command
+# (select false if the Regulator's inertia matrix isn't trustworthy)
+use_angaccel: false
+
+# Trajectory optimizer for coordinating thrust and attitude commands to track a position path
+planner:
+  timestep: 0.02  # temporal discretization size for the prediction model, [s]
+  horizon: 1  # total time into the future to optimize over, [s]
+  prox_tol: 5  # maximum position error for which the reference is considered tracked and will proceed, [m]
+  cost_tol: 0  # maximum relative cost improvement between iterations for which the plan is considered converged
+  max_iter: 3  # maximum number of iterations per optimization
+  # Deterministic Markov decision process for predicting and judging event trajectories
+  model:
+    # Physics
+    gravity: [0, 0, -9.80665]  # apparent gravitation (i.e. with buoyancy) in world-coordinates, [m/s^2]
+    mass: 1.45  # total inertial mass, [kg]
+    coeff_drag: 0.001  # coefficient of drag, [N/(m/s)]
+    # Constraints
+    strictness: 1000  # scale factor for constraint violation penalties
+    min_thrust:  4  # minimum allowed collective thrust command, [N]
+    nom_thrust: 14  # nominal desired collective thrust command, [N]
+    max_thrust: 35  # maximum allowed collective thrust command, [N]
+    lim_angvel: [3, 3, 3]  # maximum allowed angular velocity command magnitude on each body axis, [rad/s]
+    # Objectives
+    weight_thrust: 2  # importance weighting factor placed on aggressively off-nominal collective thrust commands, [$/N^2]
+    weight_angvel: [25, 25, 25]  # importance weighting factors placed on aggressive body angular velocity commands, [$/(rad/s)^2]
+    weight_poserr: [50, 50, 50]  # importance weighting factors placed on world-coordinate position tracking error, [$/m^2]
+    weight_velerr: [10, 10, 10]  # importance weighting factors placed on world-coordinate velocity tracking error, [$/(m/s)^2]
+
+#########################

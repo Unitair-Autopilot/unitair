@@ -1,0 +1,32 @@
+<!-- Launches everything needed to run on the offboard (groundstation) computer. -->
+<!-- ######################################### -->
+<launch>
+
+  <!-- CONFIGURATION -->
+
+  <arg name="cfg"      doc="Name of the cfg subdirectory containing all your Unitair parameter YAMLs."/>
+  <arg name="rviz"     doc="Whether or not to launch a new instance of RViz." default="true"/>
+  <arg name="joystick" doc="Whether the joystick should run through ground-control ('gc') or radio-control ('rc')." default="rc"/>
+
+  <include file="$(find unitair)/run/parameters.launch" pass_all_args="true"/>
+
+  <!-- MISSION NODES -->
+
+  <node name="heartbeat" pkg="unitair" type="heartbeat_node.py"
+        required="false" output="screen"/>
+
+  <node name="visualizer" pkg="unitair" type="visualizer_node.py"
+        required="false" output="screen"/>
+
+  <node name="rviz" pkg="rviz" type="rviz"
+        required="false" output="log"
+        args="-d $(find unitair)/cfg/rviz.yaml"
+        if="$(arg rviz)"/>
+
+  <!-- HARDWARE NODES -->
+
+  <node name="joystick_gc" pkg="unitair" type="joystick_node.py"
+        required="false" output="screen"
+        if="$(eval joystick == 'gc')"/>
+
+</launch>

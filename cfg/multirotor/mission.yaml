@@ -1,0 +1,31 @@
+# User-interface and mission-specific parameters for the multirotor UAV.
+##################################################
+
+# Manages the system mode, health aggregation, command multiplexing, and failsafes
+manager:
+  failsafe_delay: 2  # how long to wait on lost connection before engaging a fail-safe, [s]
+  # Stabilized-manual parameters
+  throttle_style: "trigger"  # "stick" or "trigger"
+  attitude_style: "copter"  # "conventional" or "copter"
+  thrust_range: 20  # [N] (keep this less than actual max to leave room for attitude control)
+  roll_range: 45  # [deg]
+  pitch_range: 45  # [deg]
+  roll_rate: 90  # [deg/s]
+  pitch_rate: 90  # [deg/s]
+  yaw_rate: 90  # [deg/s]
+
+#########################
+
+# Publishes a ping from offboard to onboard for communications monitoring
+heartbeat:
+  rate: 5  # frequency of publication, [Hz]
+
+#########################
+
+# Relays Unitair messages in a visualizable form
+visualizer:
+  rate: 30  # frequency at which visualization messages are published, [Hz]
+  body_shape: [0.08, 0.25, 0.25]  # dimensions of a prism in body-coordinates to represent the body, [m]
+  plan_count: 100  # number of poses to display along the guidance plan
+
+#########################

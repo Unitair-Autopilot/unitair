@@ -1,0 +1,7 @@
+<!-- Launches an external GPS package. -->
+<!-- ######################################### -->
+<launch>
+
+  <include file="$(find nmea_navsat_driver)/launch/nmea_serial_driver.launch"/>
+
+</launch>

@@ -1,0 +1,53 @@
+# Control parameters for the fixed-wing UAV.
+##################################################
+
+# Computes torques that reject attitude tracking error via adaptive feedback
+regulator:
+  # Physical parameters
+  inertia_matrix: [[  0.10,    0, -0.005],
+                   [     0, 0.24,      0],
+                   [-0.005,    0,   0.33]]  # inertia tensor expressed in body-coordinates about the center-of-mass, [kg*m^2]
+  aero_axis: [1, 0, 0]  # natural direction of forward flight in body-coordinates
+  min_airvel: 8  # minimum air-relative velocity along aero_axis below which there is insufficient attitude control authority, [m/s]
+  # Tuning knobs
+  ori_feedback_gains:    [4, 4, 0]  # sensitivities to orientation error in body-coordinates, [1/s]
+  angvel_feedback_gains: [8, 4, 2]  # sensitivities to angular velocity error in body-coordinates, [1/s]
+  aerospring_adaptive_gains:  [   0,    0, 0]  # learning-rates for the restorative aerodynamic torque model in body-coordinates
+  aerodamper_adaptive_gains:  [1e-1, 1e-1, 0]  # learning-rates for the dissipative aerodynamic torque model in body-coordinates
+  disturbance_adaptive_gains: [1e-3, 1e-1, 0]  # learning-rates for the exogenous or actuator-induced disturbance torque in body-coordinates, i.e. traditional integral gain
+  aerodamper_adaptive_means: [0.5, 0.5, 0]  # expectation for the dissipative aerodynamic torque model coefficients in body-coordinates
+  amnesia: 0.1  # rate of mean-reversion for all adaptations, i.e. integral leakiness, [1/s]
+
+#########################
+
+# Solves for an optimal allocation of actuator efforts to achieve a desired wrench
+allocator:
+  # Position in body-coordinates of the center-of-mass
+  com: [-0.07, 0, -0.06]
+  # List of components that generate wrenches via eff*(c1+c2*|eff|)*[lin,ang+(cen-com)Xlin]
+  actuators:
+    - # Left aileron
+      angvec: [-1, 0, 0]
+      coeff1: 2
+    - # Right aileron
+      angvec: [-1, 0, 0]
+      coeff1: 2
+    - # Elevator
+      angvec: [0, -1, 0]
+      coeff1: 2
+    - # Propeller
+      center: [-0.338, 0, -0.06]  # position in body-coordinates of where the wrench is applied, [m]
+      linvec: [1, 0, 0]  # basis-vector in body-coordinates of the force part of the wrench
+      angvec: [-0.002, 0, 0]  # basis-vector in body-coordinates of the torque part of the wrench, [N*m/N]
+      coeff1: 9.949  # first-order positive coefficient for force from effort, [N/eff]
+      coeff2: 9.851  # second-order positive coefficient for force from effort, [N/eff^2]
+      mineff: 0  # minimum allowed effort
+      maxeff: 1  # maximum allowed effort
+    - # Left rudder
+      angvec: [0, 0, -1]
+      coeff1: 0.5
+    - # Right rudder
+      angvec: [0, 0, -1]
+      coeff1: 0.5
+
+#########################

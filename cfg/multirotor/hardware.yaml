@@ -1,0 +1,61 @@
+# Hardware parameters for the multirotor UAV.
+##################################################
+
+accelerometer_magnetometer:
+  type: "FX0S8700"  # (only type currently supported)
+  i2c_device: "/dev/i2c-1"
+  sample_rate: 100  # [Hz]
+  accel_sensitivity: 4  # [+/- g] valid options = 2, 4, 8
+
+#########################
+
+gyroscope:
+  type: "FXAS21002"  # (only type currently supported)
+  i2c_device: "/dev/i2c-1"
+  sample_rate: 100  # [Hz]
+  gyro_sensitivity: 500  # [+/- deg/s] valid options = 250, 500, 1000, 2000
+
+#########################
+
+motion_capture:
+  type: "1720"  # (only type currently supported)
+  name: "unitair"  # name assigned to this body
+  angvel_cutoff: 30.0  # orientation changes faster than this are deemed glitches and rejected, [rad/s]
+  rejection_duration: 1.0  # amount of time that contiguous glitches are rejected before accepting the new orientation, [s]
+  warn: true  # whether or not to display a warning when glitches are rejected
+
+#########################
+
+pwm_driver:
+  type: "PCA9685"  # (only type currently supported)
+  i2c_device: "/dev/i2c-1"
+  pwm_frequency: 50  # [Hz] standard frequency for hobby servo's/ESCs
+  pwm_mapping:  # [minimum, neutral, maximum] PWM duty-cycles (as fractions) corresponding to [-1, 0, 1] actuator efforts for each channel
+    - [0.056, 0.056, 0.100]  # channel 0: front_left thruster
+    - [0.056, 0.056, 0.100]  # channel 1: front_right thruster
+    - [0.056, 0.056, 0.100]  # channel 2: back_right thruster
+    - [0.056, 0.056, 0.100]  # channel 3: back_left thruster
+
+#########################
+
+# Interface with a joystick
+joystick:
+  # GC Mode (e.g. XBox gamepad)
+  rate: 30  # frequency at which the joystick state is published, [Hz]
+  stick_deadband: 0.05  # fraction of analog joystick travel that should be treated as zero
+  trigger_deadband: 0.0  # fraction of analog trigger travel that should be treated as zero
+  # RC Mode (e.g. Jeti transmitter)
+  topic: "sbus"  # name of the Sbus topic
+  channels:  # input names and [min, max] ranges for each channel (use reverse order to negate)
+    - input: "right_stick_east"
+      range: [192, 1792]
+    - input: "right_stick_north"
+      range: [192, 1792]
+    - input: "left_stick_north"
+      range: [192, 1792]
+    - input: "left_stick_east"
+      range: [192, 1792]
+    - input: "switch_west"
+      range: [192, 1792]
+
+#########################

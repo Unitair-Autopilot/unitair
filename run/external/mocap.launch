@@ -1,0 +1,9 @@
+<!-- Launches an external motion-capture package. -->
+<!-- ######################################### -->
+<launch>
+
+  <include file="$(find vrpn_1720)/launch/1720_vrpn.launch">
+    <arg name="server" value="$(arg mocap_server)"/>
+  </include>
+
+</launch>

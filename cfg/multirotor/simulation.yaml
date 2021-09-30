@@ -1,0 +1,215 @@
+# Stokesim simulation parameters for the multirotor UAV.
+##################################################
+
+# ENVIRONMENT
+#########################
+realtime: true  # whether or not sim-time throttles back to real-time
+end_time: -1  # terminal sim-time (negative implies endless sim), [s]
+world:
+  clock:
+    dt0: 0.0005  # initial integration timestep, [s]
+  env:
+    geoid:
+      enu0_lla: {"lat": +42.550938, "lon": -72.013464, "alt": 282}  # LLA of ENU origin, [deg, deg, m]
+    atmos:
+      wind_mean: [0, 0, 0]  # uniform wind mean velocity in local ENU, [m/s]
+      turb_taus: [1, 1, 1]  # time-constants measuring the mean-return tendency of the wind field, [s] (>0)
+      turb_covar: [[0, 0, 0],
+                   [0, 0, 0],
+                   [0, 0, 0]]  # wind turbulence random-walk continuous-time covariance matrix, [(m/s)^2/s]
+    magneto: null  # defaults to NOAA WMM-2020
+    octree: null  # nothing to collide with
+#########################
+
+# VEHICLE
+#########################
+  crafts:
+    multirotor:
+      energy0: 1e38  # total battery energy, [J]
+      voltage0: 22  # nominal battery voltage, [V]
+      power0: 18  # power consumed by electronics excluding actuators, [W]
+
+      body:
+        pos0: [0, 0, 0]  # initial position of the center-of-mass in ENU, [m]
+        ori0: {"w": 1, "x": 0, "y": -1, "z": 0}  # initial orientation of COM-coordinates relative to ENU
+        vel0: [0, 0, 0]  # initial velocity of the COM relative to geoid expressed in COM-coordinates, [m/s]
+        avel0: [0, 0, 0]  # initial angular velocity of body relative to geoid expressed in COM-coordinates, [rad/s]
+        mass: 1.45  # total mass (including other parts of owner craft), [kg]
+        inertia: [[1e-2,    0,    0],
+                  [   0, 1e-2,    0],
+                  [   0,    0, 1e-2]]  # inertia tensor (including other parts of owner craft) expressed in COM-coordinates, [kg*m^2]
+        centroid: [0, 0, 0]  # position of the geometric centroid in COM-coordinates, [m]
+        bounding_box: [0.2, 0.5, 0.5]  # edge dimensions of COM-coordinate-aligned bounding box, [m]
+        areas: [0.08, 0.05, 0.05]  # largest cross-sectional area along each COM-coordinate axis, [m^2]
+        volume: 2e-4  # total volume (including other parts of owner craft), [m^3]
+        cenpres: [0, 0, 0]  # position of the center of pressure of the body (no actuators) in COM-coordinates, [m]
+        Cp1: [[2e-2,    0,    0],
+              [   0, 2e-2,    0],
+              [   0,    0, 2e-2]]  # translational linear-drag tensor in COM-coordinates, [N/(m/s)]
+        Cp2: [[2e-4,    0,    0],
+              [   0, 2e-4,    0],
+              [   0,    0, 2e-4]]  #  translational quadratic-drag tensor in COM-coordinates, [N/(m/s)^2]
+        Cq: [[1e-4,    0,    0],
+             [   0, 1e-4,    0],
+             [   0,    0, 1e-4]]  # rotational linear-drag tensor in COM-coordinates, [N*m/(rad/s)]
+
+      actuators:
+        front_left:  # (0)
+          type: "thruster"
+          dia: 0.125  # diameter of the propeller, [m]
+          pos: [0, 0.2286, -0.2286]  # position vector in COM-coordinates of mounting point, [m]
+          dir: [1, 0, 0]  # direction vector in COM-coordinates of thrust at positive RPM
+          c1: 7.167e-4  # linear coefficient for thrust from RPM, [N/RPM]
+          c2: 4.134e-8  # quadratic coefficient for thrust from RPM, [N/RPM^2]
+          kr: +1.57e-2  # ratio of reaction torque to thrust (sign defines handedness), [N*m/N]
+          kv: 2e-6  # thrust-loss-factor per unit squared velocity, [(m/s)^-2] (>=0)
+          rpm_min: 0  # minimum [RPM]
+          rpm_max: 9600  # maximum [RPM]
+          deadband: 300  # plus-or-minus RPM command dead-band, [RPM] (>=0)
+          rpmdot: 15000  # angular acceleration magnitude, [RPM/s] (>0)
+          power_max: 140  # power consumption at maximum RPM (negative implies use reaction_torque*RPM), [W]
+        front_right:  # (1)
+          type: "thruster"
+          dia: 0.125
+          pos: [0, -0.2286, -0.2286]
+          dir: [1, 0, 0]
+          c1: 7.167e-4
+          c2: 4.134e-8
+          kr: -1.57e-2
+          kv: 2e-6
+          rpm_min: 0
+          rpm_max: 9600
+          deadband: 300
+          rpmdot: 15000
+          power_max: 140
+        back_right:  # (2)
+          type: "thruster"
+          dia: 0.125
+          pos: [0, -0.2286, 0.2286]
+          dir: [1, 0, 0]
+          c1: 7.167e-4
+          c2: 4.134e-8
+          kr: +1.57e-2
+          kv: 2e-6
+          rpm_min: 0
+          rpm_max: 9600
+          deadband: 300
+          rpmdot: 15000
+          power_max: 140
+        back_left:  # (3)
+          type: "thruster"
+          dia: 0.125
+          pos: [0, 0.2286, 0.2286]
+          dir: [1, 0, 0]
+          c1: 7.167e-4
+          c2: 4.134e-8
+          kr: -1.57e-2
+          kv: 2e-6
+          rpm_min: 0
+          rpm_max: 9600
+          deadband: 300
+          rpmdot: 15000
+          power_max: 140
+
+      sensors:
+        accelerometer:
+          type: "accelerometer"
+          freq: 100  # sampling rate, [Hz]
+          pos: [0, 0, 0]  # position on the craft (body), [m]
+          rotmat: [[ 0, 0, 1],
+                   [ 0, 1, 0],
+                   [-1, 0, 0]]  # orientation matrix relative to the craft (sensor in body)
+          noise_covar: [[3e-3,    0,    0],
+                        [   0, 3e-3,    0],
+                        [   0,    0, 3e-3]]  # noise covariance matrix, [(m/s^2)^2]
+          bias0: [0.004, 0.002, -0.0008]  # initial bias, [m/s^2]
+          bias_taus: [1, 1, 1]  # bias random-walk return time constants, [s] (>0)
+          bias_covar: [[1e-6,    0,    0],
+                       [   0, 1e-6,    0],
+                       [   0,    0, 1e-6]]  # bias random-walk continuous-time covariance matrix, [(m/s^2)^2/s]
+          thermal_gain: 1e-4  # scale factor for temperature deviation's effect on noise, [K^-1]
+        gyroscope:
+          type: "gyroscope"
+          freq: 100  # [Hz]
+          pos: [0, 0, 0]  # [m]
+          rotmat: [[ 0, 0, 1],
+                   [ 0, 1, 0],
+                   [-1, 0, 0]]
+          noise_covar: [[3e-4,    0,    0],
+                        [   0, 3e-4,    0],
+                        [   0,    0, 3e-4]]  # [(rad/s)^2]
+          bias0: [0.005, -0.007, 0.0004]  # [rad/s]
+          bias_taus: [1, 1, 1]  # [s] (>0)
+          bias_covar: [[1e-7,    0,    0],
+                       [   0, 1e-7,    0],
+                       [   0,    0, 1e-7]]  # [(rad/s)^2/s]
+          thermal_gain: 1e-4  # [K^-1]
+        magnetometer:
+          type: "magnetometer"
+          freq: 100  # [Hz]
+          pos: [0, 0, 0]  # [m]
+          rotmat: [[ 0, 0, 1],
+                   [ 0, 1, 0],
+                   [-1, 0, 0]]
+          noise_covar: [[1e-12,     0,     0],
+                        [    0, 1e-12,     0],
+                        [    0,     0, 1e-12]]  # [T^2]
+          hard_distort: [0, 0, 0]  # "hard-iron" distortion vector, [T]
+          soft_distort: [[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, 1]]  # "soft-iron" distortion matrix
+        barometer:
+          type: "barometer"
+          freq: 10  # [Hz]
+          pos: [0, 0, 0]  # [m]
+          noise_stdev: 0.15  # [Pa]
+          bias: 0.08  # [Pa]
+        motion_capture:
+          type: "motion_capture"
+          freq: 60  # [Hz]
+          pos: [0, 0, 0]  # tracked point on the body in COM-coordinates, [m]
+          ori: {"w": 1, "x": 0, "y": 1, "z": 0}  # orientation offset relative to COM-coordinates
+          noise_covar: [[0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0]]  # corresponds to [pos_x, pos_y, pos_z, ori_x, ori_y, ori_z]^2
+          bias0: [0, 0, 0, 0, 0, 0]  # [m, m, m, rad, rad, rad]
+          bias_taus: [10, 10, 10, 10, 10, 10]  # [s] (>0)
+          bias_covar: [[1e-6,    0,    0,    0,    0,    0],
+                       [   0, 1e-6,    0,    0,    0,    0],
+                       [   0,    0, 1e-6,    0,    0,    0],
+                       [   0,    0,    0, 1e-6,    0,    0],
+                       [   0,    0,    0,    0, 1e-6,    0],
+                       [   0,    0,    0,    0,    0, 1e-6]]  # [m^2, m^2, m^2, rad^2, rad^2, rad^2]/s
+        gps:
+          type: "gps"
+          freq: 10  # [Hz]
+          pos: [0, 0, 0]  # [m]
+          noise_covar: [[   0,     0,     0,     0,     0,     0],
+                        [   0,     0,     0,     0,     0,     0],
+                        [   0,     0,     0,     0,     0,     0],
+                        [   0,     0,     0, 1e-02,     0,     0],
+                        [   0,     0,     0,     0, 1e-02,     0],
+                        [   0,     0,     0,     0,     0, 1e-02]]  # corresponds to [lat, lon, alt, vel_east, vel_north, vel_up]^2
+          bias0: [0, 0, 0, 0, 0, 0]  # [deg, deg, m, m/s, m/s, m/s]
+          bias_taus: [3, 3, 3, 3, 3, 3]  # [s] (>0)
+          bias_covar: [[1e-13,     0,     0,     0,     0,     0],
+                       [    0, 1e-13,     0,     0,     0,     0],
+                       [    0,     0, 1e-05,     0,     0,     0],
+                       [    0,     0,     0, 1e-04,     0,     0],
+                       [    0,     0,     0,     0, 1e-04,     0],
+                       [    0,     0,     0,     0,     0, 1e-04]]  # [deg^2, deg^2, m^2, (m/s)^2, (m/s)^2, (m/s)^2]/s
+#########################
+
+# INTERFACE
+#########################
+plugins:
+  unitair_multirotor:
+    bin_file: "bld/stokesim_node.so"  # file containing the compiled plugin
+    call_freq: 300  # sim-time frequency at which this plugin's work function is called, [Hz]
+    craft_name: "multirotor"  # name of the craft of interest
+    use_craft_namespace: false  # whether or not to include the craft_name in advertised topic names (helpful when simulating multiple crafts)
+    actuator_order: ["front_left", "front_right", "back_right", "back_left"]  # correspondence between the actuators in Stokesim and a unitair::Actuation message
+#########################

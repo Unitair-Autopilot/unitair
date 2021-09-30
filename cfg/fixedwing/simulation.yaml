@@ -1,0 +1,227 @@
+# Stokesim simulation parameters for the fixed-wing UAV.
+##################################################
+
+# ENVIRONMENT
+#########################
+realtime: true  # whether or not sim-time throttles back to real-time
+end_time: -1  # terminal sim-time (negative implies endless sim), [s]
+world:
+  clock:
+    dt0: 0.0005  # initial integration timestep, [s]
+  env:
+    geoid:
+      enu0_lla: {"lat": +42.551697, "lon": -72.014367, "alt": 265}  # LLA of ENU origin, [deg, deg, m]
+    atmos:
+      wind_mean: [0, 0, 0]  # uniform wind mean velocity in local ENU, [m/s]
+      turb_taus: [5, 5, 5]  # time-constants measuring the mean-return tendency of the wind field, [s] (>0)
+      turb_covar: [[0e-2,    0,    0],
+                   [   0, 0e-2,    0],
+                   [   0,    0, 0e-3]]  # wind turbulence random-walk continuous-time covariance matrix, [(m/s)^2/s]
+    magneto: null  # defaults to NOAA WMM-2020
+    octree: null  # nothing to collide with
+#########################
+
+# VEHICLE
+#########################
+  crafts:
+    fixedwing:
+      energy0: 1e38  # total battery energy, [J]
+      voltage0: 11.1  # nominal battery voltage, [V]
+      power0: 6  # power consumed by electronics excluding actuators, [W]
+
+      body:
+        pos0: [0, 0, 0]  # initial position of the center-of-mass in ENU, [m]
+        ori0: {"w": 1, "x": 0, "y": 0, "z": 0}  # initial orientation of COM-coordinates relative to ENU
+        vel0: [0, 0, 0]  # initial velocity of the COM relative to geoid expressed in COM-coordinates, [m/s]
+        avel0: [0, 0, 0]  # initial angular velocity of body relative to geoid expressed in COM-coordinates, [rad/s]
+        mass: 3.16  # total mass (including other parts of owner craft), [kg]
+        inertia: [[ 0.10,    0, -0.01],
+                  [    0, 0.24,     0],
+                  [-0.01,    0,  0.33]]  # inertia tensor (including other parts of owner craft) expressed in COM-coordinates, [kg*m^2]
+        centroid: [0, 0, 0]  # position of the geometric centroid in COM-coordinates, [m]
+        bounding_box: [1.4, 1.8, 0.36]  # edge dimensions of COM-coordinate-aligned bounding box, [m]
+        areas: [0.05, 0.06, 0.44]  # largest cross-sectional area along each COM-coordinate axis, [m^2]
+        volume: 0.01  # total volume (including other parts of owner craft), [m^3]
+        cenpres: [-0.01, 0, 0.06]  # position of the center of pressure of the body (no actuators) in COM-coordinates, [m]
+        Cp1: [[ 1, 0, -2],
+              [ 0, 5,  0],
+              [-2, 0, 80]]  # translational linear-drag tensor in COM-coordinates, [N/(m/s)]
+        Cp2: [[0.4, 0, 0],
+              [  0, 0, 0],
+              [  0, 0, 0]]  #  translational quadratic-drag tensor in COM-coordinates, [N/(m/s)^2]
+        Cq: [[0.4,   0,   0],
+             [  0, 0.8,   0],
+             [  0,   0, 0.2]]  # rotational linear-drag tensor in COM-coordinates, [N*m/(rad/s)]
+
+      actuators:
+        prop:
+          type: "thruster"
+          dia: 0.3  # diameter of the propeller, [m]
+          pos: [-0.268, 0, 0.026]  # position vector in COM-coordinates of mounting point, [m]
+          dir: [1, 0, 0]  # direction vector in COM-coordinates of thrust at positive RPM
+          c1: 9.948e-4  # linear coefficient for thrust from RPM, [N/RPM]
+          c2: 9.853e-8  # quadratic coefficient for thrust from RPM, [N/RPM^2]
+          kr: -0.002  # ratio of reaction torque to thrust (sign defines handedness), [N*m/N]
+          kv: 1e-5  # thrust-loss-factor per unit squared velocity, [(m/s)^-2] (>=0)
+          ks: 0  # linear coefficient for slipstream wind from thrust, [(m/s)/N]
+          rpm_min: 0  # minimum [RPM]
+          rpm_max: 10000  # maximum [RPM]
+          deadband: 500  # plus-or-minus RPM command dead-band, [RPM] (>=0)
+          rpmdot: 8000  # angular acceleration magnitude, [RPM/s] (>0)
+          power_max: 650  # power consumption at maximum RPM (negative implies use reaction_torque*RPM), [W]
+        lail:
+          type: "surface"
+          dims: [0.5, 0.07]  # lengths along the surface 0 and 1 directions, [m]
+          coeff: 9  # coefficient for quadratic-drag inducing face, (>0)
+          origin: [-0.06, 0.85, 0.06]  # mounting point and origin of surface-coordinates in COM-coordinates, [m]
+          orient0: {"w": 0, "x": -1, "y": 1, "z": 0}  # trim orientation of surface-coordinates relative to COM-coordinates
+          cenpres: [0.25, 0.035, 0]  # vector in surface-coordinates of the center of pressure, [m]
+          axis: [-1, 0, 0]  # direction vector in surface-coordinates about which the surface can be rotated
+          ang_min: -20  # minimum deflection angle, [deg]
+          ang_max: 20  # maximum deflection angle, [deg]
+          angdot: 180  # angular velocity magnitude for rotating the surface, [deg/s] (>0)
+          flutter_amp: 0.02  # amplitude of flutter deflections, [deg/(m/s)]
+          flutter_freq: 6.44  # frequency of flutter deflections, [Hz]
+        rail:
+          type: "surface"
+          dims: [0.5, 0.07]
+          coeff: 9
+          origin: [-0.06, -0.85, 0.06]
+          orient0: {"w": 1, "x": 0, "y": 0, "z": 1}
+          cenpres: [0.25, 0.035, 0]
+          axis: [-1, 0, 0]
+          ang_min: -20
+          ang_max: 20
+          angdot: 180
+          flutter_amp: 0.02
+          flutter_freq: 6.44
+        elv:
+          type: "surface"
+          dims: [0.515, 0.045]
+          coeff: 12  # (accounts for slipstream)
+          origin: [-1.10, -0.258, 0.06]
+          orient0: {"w": 1, "x": 0, "y": 0, "z": 1}
+          cenpres: [0.258, 0.023, 0]
+          axis: [1, 0, 0]
+          ang_min: -30
+          ang_max: 30
+          angdot: 180
+          flutter_amp: 0.01
+          flutter_freq: 4.72
+        lrud:
+          type: "surface"
+          dims: [0.22, 0.035]
+          coeff: 4
+          origin: [-1.10, 0.258, 0.06]
+          orient0: {"w": 0.5, "x": 0.5, "y": -0.5, "z": 0.5}
+          cenpres: [0.11, 0.018, 0]
+          axis: [1, 0, 0]
+          ang_min: -10
+          ang_max: 10
+          angdot: 180
+          flutter_amp: 0.01
+          flutter_freq: 6.44
+        rrud:
+          type: "surface"
+          dims: [0.22, 0.035]
+          coeff: 4
+          origin: [-1.10, -0.258, 0.06]
+          orient0: {"w": 0.5, "x": 0.5, "y": -0.5, "z": 0.5}
+          cenpres: [0.11, 0.018, 0]
+          axis: [1, 0, 0]
+          ang_min: -10
+          ang_max: 10
+          angdot: 180
+          flutter_amp: 0.01
+          flutter_freq: 6.44
+
+      sensors:
+        accelerometer:
+          type: "accelerometer"
+          freq: 100  # sampling rate, [Hz]
+          pos: [-0.095, 0.030, -0.017]  # position on the craft (body), [m]
+          rotmat: [[0.997972, 0, -0.063661],
+                   [       0, 1,         0],
+                   [0.063661, 0,  0.997972]]  # orientation matrix relative to the craft (sensor in body)
+          noise_covar: [[3e-3,    0,    0],
+                        [   0, 3e-3,    0],
+                        [   0,    0, 3e-3]]  # noise covariance matrix, [(m/s^2)^2]
+          bias0: [0.004, 0.002, -0.0008]  # initial bias, [m/s^2]
+          bias_taus: [1, 1, 1]  # bias random-walk return time constants, [s] (>0)
+          bias_covar: [[1e-6,    0,    0],
+                       [   0, 1e-6,    0],
+                       [   0,    0, 1e-6]]  # bias random-walk continuous-time covariance matrix, [(m/s^2)^2/s]
+          thermal_gain: 1e-4  # scale factor for temperature deviation's effect on noise, [K^-1]
+        gyroscope:
+          type: "gyroscope"
+          freq: 100  # [Hz]
+          pos: [-0.095, 0.030, -0.017]  # [m]
+          rotmat: [[0.997972, 0, -0.063661],
+                   [       0, 1,         0],
+                   [0.063661, 0,  0.997972]]
+          noise_covar: [[3e-4,    0,    0],
+                        [   0, 3e-4,    0],
+                        [   0,    0, 3e-4]]  # [(rad/s)^2]
+          bias0: [0.005, -0.007, 0.0004]  # [rad/s]
+          bias_taus: [1, 1, 1]  # [s] (>0)
+          bias_covar: [[1e-7,    0,    0],
+                       [   0, 1e-7,    0],
+                       [   0,    0, 1e-7]]  # [(rad/s)^2/s]
+          thermal_gain: 1e-4  # [K^-1]
+        magnetometer:
+          type: "magnetometer"
+          freq: 100  # [Hz]
+          pos: [-0.095, 0.030, -0.017]  # [m]
+          rotmat: [[0.997972, 0, -0.063661],
+                   [       0, 1,         0],
+                   [0.063661, 0,  0.997972]]
+          noise_covar: [[1e-12,     0,     0],
+                        [    0, 1e-12,     0],
+                        [    0,     0, 1e-12]]  # [T^2]
+          hard_distort: [-2.932e-05, -3.470e-05, -3.734e-05]  # "hard-iron" distortion vector, [T]
+          soft_distort: [[ 0.941, -0.198, -0.105],
+                         [-0.198,  0.877,  0.110],
+                         [-0.105,  0.110,  1.224]]  # "soft-iron" distortion matrix
+        barometer:
+          type: "barometer"
+          freq: 10  # [Hz]
+          pos: [-0.088, -0.017, -0.016]  # [m]
+          noise_stdev: 0.15  # [Pa]
+          bias: 0.08  # [Pa]
+        pitot:
+          type: "pitot"
+          freq: 5  # [Hz]
+          pos: [0.07, 0, 0.06]  # [m]
+          dir: [1, 0, 0]  # direction of positive measurement (body)
+          noise_stdev: 3  # [Pa]
+          bias: -0.005  # [Pa]
+        gps:
+          type: "gps"
+          freq: 10  # [Hz]
+          pos: [-0.088, -0.017, -0.016]  # [m]
+          noise_covar: [[   0,     0,     0,     0,     0,     0],
+                        [   0,     0,     0,     0,     0,     0],
+                        [   0,     0,     0,     0,     0,     0],
+                        [   0,     0,     0, 1e-02,     0,     0],
+                        [   0,     0,     0,     0, 1e-02,     0],
+                        [   0,     0,     0,     0,     0, 1e-02]]  # corresponds to [lat, lon, alt, vel_east, vel_north, vel_up]^2
+          bias0: [0, 0, 0, 0, 0, 0]  # [deg, deg, m, m/s, m/s, m/s]
+          bias_taus: [3, 3, 3, 3, 3, 3]  # [s] (>0)
+          bias_covar: [[1e-13,     0,     0,     0,     0,     0],
+                       [    0, 1e-13,     0,     0,     0,     0],
+                       [    0,     0, 1e-05,     0,     0,     0],
+                       [    0,     0,     0, 1e-04,     0,     0],
+                       [    0,     0,     0,     0, 1e-04,     0],
+                       [    0,     0,     0,     0,     0, 1e-04]]  # [deg^2, deg^2, m^2, (m/s)^2, (m/s)^2, (m/s)^2]/s
+#########################
+
+# INTERFACE
+#########################
+plugins:
+  unitair_fixedwing:
+    bin_file: "bld/stokesim_node.so"  # file containing the compiled plugin
+    call_freq: 300  # sim-time frequency at which this plugin's work function is called, [Hz]
+    craft_name: "fixedwing"  # name of the craft of interest
+    use_craft_namespace: false  # whether or not to include the craft_name in advertised topic names (helpful when simulating multiple crafts)
+    actuator_order: ["lail", "rail", "elv", "prop", "lrud", "rrud"]  # correspondence between the actuators in Stokesim and a unitair::Actuation message
+#########################

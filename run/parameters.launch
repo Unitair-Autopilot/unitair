@@ -1,0 +1,20 @@
+<!-- Launches the ROS Parameter Server with all the YAML files in the specified cfg subdirectory. -->
+<!-- ######################################### -->
+<launch>
+
+  <!-- ARGS -->
+
+  <!-- (generally this launch is included by another launch and the cfg argument is forwarded) -->
+  <arg name="cfg" doc="Name of the cfg subdirectory containing all your Unitair parameter YAMLs."/>
+
+  <!-- PARAMS -->
+
+  <param name="cfg_path" type="string" value="$(find unitair)/cfg/$(arg cfg)"/>
+
+  <rosparam command="load" file="$(find unitair)/cfg/$(arg cfg)/mission.yaml"    ns="mission"/>
+  <rosparam command="load" file="$(find unitair)/cfg/$(arg cfg)/guidance.yaml"   ns="guidance"/>
+  <rosparam command="load" file="$(find unitair)/cfg/$(arg cfg)/navigation.yaml" ns="navigation"/>
+  <rosparam command="load" file="$(find unitair)/cfg/$(arg cfg)/control.yaml"    ns="control"/>
+  <rosparam command="load" file="$(find unitair)/cfg/$(arg cfg)/hardware.yaml"   ns="hardware"/>
+
+</launch>

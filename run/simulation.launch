@@ -1,0 +1,70 @@
+<!-- Launches everything needed to run a SIL-simulation with Stokesim on this computer. -->
+<!-- ######################################### -->
+<launch>
+
+  <!-- CONFIGURATION -->
+
+  <arg name="cfg"         doc="Name of the cfg subdirectory containing all your Unitair parameter YAMLs."/>
+  <arg name="nav"         doc="Set this to 'truth' to replace navigation outputs with the simulator's truth state." default="estimated"/>
+  <arg name="joystick"    doc="Whether the joystick should run through ground-control ('gc') or radio-control ('rc')." default="gc"/>
+  <arg name="passthrough" doc="Replaces the allocator with the passthrough (joystick -> actuators) node if true." default="false"/>
+
+  <include file="$(find unitair)/run/parameters.launch" pass_all_args="true"/>
+
+  <remap from="hardware/battery"        to="simulation/truth/battery"/>
+  <remap from="hardware/accelerometer"  to="simulation/measured/accelerometer"/>
+  <remap from="hardware/gyroscope"      to="simulation/measured/gyroscope"/>
+  <remap from="hardware/magnetometer"   to="simulation/measured/magnetometer"/>
+  <remap from="hardware/barometer"      to="simulation/measured/barometer"/>
+  <remap from="hardware/pitot"          to="simulation/measured/pitot"/>
+  <remap from="hardware/gps"            to="simulation/measured/gps"/>
+  <remap from="hardware/motion_capture" to="simulation/measured/motion_capture"/>
+
+  <remap from="navigation/state" to="simulation/truth/state" if="$(eval nav == 'truth')"/>
+
+  <!-- SIMULATION NODES -->
+
+  <node name="stokesim" pkg="unitair" type="stokesim_node.sh"
+        required="false" output="screen" args="$(arg cfg)"/> <!-- note: unaffected by topic remaps (argv inaccessible to ros::init) -->
+
+  <!-- MISSION NODES -->
+
+  <node name="manager" pkg="unitair" type="manager_node.py"
+        required="false" output="screen"
+        unless="$(arg passthrough)"/>
+
+  <node name="passthrough" pkg="unitair" type="passthrough_node.py"
+        required="true" output="screen"
+        if="$(arg passthrough)"/>
+
+  <include file="$(find unitair)/run/offboard.launch" pass_all_args="true"/>
+
+  <!-- GUIDANCE NODES -->
+
+  <node name="planner" pkg="unitair" type="planner_node"
+        required="false" output="screen"/>
+
+  <!-- NAVIGATION NODES -->
+
+  <node name="estimator" pkg="unitair" type="estimator_node"
+        required="false" output="screen"
+        unless="$(eval nav == 'truth')"/>
+
+  <!-- CONTROL NODES -->
+
+  <node name="regulator" pkg="unitair" type="regulator_node"
+        required="false" output="screen"/>
+
+  <node name="allocator" pkg="unitair" type="allocator_node"
+        required="false" output="screen"
+        unless="$(arg passthrough)"/>
+
+  <!-- HARDWARE NODES -->
+
+  <group if="$(eval joystick == 'rc')">
+    <include file="$(find unitair)/run/external/rc.launch" pass_all_args="true"/>
+    <node name="joystick_rc" pkg="unitair" type="rc_node.py"
+          required="false" output="screen"/>
+  </group>
+
+</launch>

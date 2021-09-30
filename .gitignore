@@ -1,0 +1,75 @@
+# List of all files and directories to be
+# ignored by Git version control.
+##################################################
+
+#########################
+# Custom
+#########################
+
+# Documentation
+doc/html/
+unitair.wiki/
+
+# Results
+bld/
+log/
+
+# Vim
+*.sw?
+
+#########################
+# C++
+#########################
+
+# Prerequisites
+*.d
+
+# Compiled object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+#########################
+# Python
+#########################
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+*.egg
+*.egg-info/
+MANIFEST
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+##################################################

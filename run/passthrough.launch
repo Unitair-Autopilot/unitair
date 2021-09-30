@@ -1,0 +1,61 @@
+<!-- Launches everything needed to run on the onboard (UAV) computer for true manual flight (bypasses G&C). -->
+<!-- ######################################### -->
+<launch>
+
+  <!-- CONFIGURATION -->
+
+  <arg name="cfg"          doc="Name of the cfg subdirectory containing all your Unitair parameter YAMLs."/>
+  <arg name="actuate"      doc="Whether or not the actuator drivers should be run." default="true"/>
+  <arg name="joystick"     doc="Whether the joystick should run through ground-control ('gc') or radio-control ('rc')." default="rc"/>
+  <arg name="mocap_server" doc="IP address for the motion-capture server computer. (Default implies no motion-capture)." default=''/>
+
+  <include file="$(find unitair)/run/parameters.launch" pass_all_args="true"/>
+
+  <!-- MISSION NODES -->
+
+  <node name="passthrough" pkg="unitair" type="passthrough_node.py"
+        required="true" output="screen"/>
+
+  <!-- HARDWARE NODES -->
+
+  <node name="pwm_driver" pkg="unitair" type="pwm_driver_node"
+        required="true" output="screen"
+        if="$(arg actuate)"/>
+
+  <group if="$(eval joystick == 'rc')">
+    <!-- RC joystick runs onboard (GC joystick runs offboard) -->
+    <include file="$(find unitair)/run/external/rc.launch" pass_all_args="true"/>
+    <node name="joystick_rc" pkg="unitair" type="rc_node.py"
+          required="true" output="screen"/>
+  </group>
+
+  <!-- JUST FOR LOGGING -->
+
+  <node name="estimator" pkg="unitair" type="estimator_node"
+        required="false" output="screen"/>
+
+  <node name="accelerometer_magnetometer" pkg="unitair" type="accelerometer_magnetometer_node"
+        required="false" output="screen"/>
+
+  <node name="gyroscope" pkg="unitair" type="gyroscope_node"
+        required="false" output="screen"/>
+
+  <group if="$(eval mocap_server == '')">
+    <!-- Use GPS, barometer, and pitot if no mocap -->
+    <include file="$(find unitair)/run/external/gps.launch" pass_all_args="true"/>
+    <node name="gps" pkg="unitair" type="gps_node.py"
+          required="false" output="screen"/>
+    <node name="barometer" pkg="unitair" type="barometer_node"
+          required="false" output="screen"/>
+    <!-- <node name="pitot" pkg="unitair" type="pitot_node"
+          required="false" output="screen"/> -->  <!-- ??? (unfinished) -->
+  </group>
+
+  <group if="$(eval mocap_server != '')">
+    <!-- Use mocap if server specified -->
+    <include file="$(find unitair)/run/external/mocap.launch" pass_all_args="true"/>
+    <node name="motion_capture" pkg="unitair" type="motion_capture_node.py"
+          required="false" output="screen"/>
+  </group>
+
+</launch>

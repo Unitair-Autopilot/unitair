@@ -1,0 +1,41 @@
+# Guidance parameters for the fixed-wing UAV.
+##################################################
+
+# Frequency at which the commands are published
+rate: 50  # [Hz]
+
+# Whether or not to include angular acceleration in the attitude command
+# (select false if the Regulator's inertia matrix isn't trustworthy)
+use_angaccel: false
+
+# Trajectory optimizer for coordinating thrust and attitude commands to track a position path
+planner:
+  timestep: 0.05  # temporal discretization size for the prediction model, [s]
+  horizon: 1  # total time into the future to optimize over, [s]
+  prox_tol: 20  # maximum position error for which the reference is considered tracked and will proceed, [m]
+  cost_tol: 0  # maximum relative cost improvement between iterations for which the plan is considered converged
+  max_iter: 3  # maximum number of iterations per optimization
+  # Deterministic Markov decision process for predicting and judging event trajectories
+  model:
+    # Physics
+    gravity: [0, 0, -9.80665]  # apparent gravitation (i.e. with buoyancy) in world-coordinates, [m/s^2]
+    mass: 3.16  # total inertial mass, [kg]
+    coeff_lift: 50  # coefficient of lift, [N/(m/s)]
+    coeff_drag:  1  # coefficient of drag, [N/(m/s)]
+    # Constraints
+    strictness: 1000  # scale factor for constraint violation penalties
+    min_height: 0  # minimum allowed position opposite gravity, [m]
+    min_airvel: 8  # minimum allowed velocity along the thrust direction, [m/s]
+    min_thrust:   6  # minimum allowed collective thrust command, [N]
+    nom_thrust:   8  # nominal desired collective thrust command, [N]
+    max_thrust:  19  # maximum allowed collective thrust command, [N]
+    lim_angvel: [3, 1, 0]  # maximum allowed angular velocity command magnitude on each body axis, [rad/s]
+    # Objectives
+    weight_thrust: 0.01  # importance weighting factor placed on aggressively off-nominal collective thrust commands, [$/N^2]
+    weight_angvel: [10, 80, 80]  # importance weighting factors placed on aggressive body angular velocity commands, [$/(rad/s)^2]
+    weight_poserr: [5, 5, 20]  # importance weighting factors placed on world-coordinate position tracking error, [$/m^2]
+    weight_velerr: [2, 2,  8]  # importance weighting factors placed on world-coordinate velocity tracking error, [$/(m/s)^2]
+    weight_align_fore: 100  # importance weighting factor placed on alignment of the thrust direction and reference velocity, [$/rad]
+    weight_align_nadir: 1  # importance weighting factor placed on alignment of the lift direction and gravity, [$/rad]
+
+#########################

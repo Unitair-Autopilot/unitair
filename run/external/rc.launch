@@ -1,0 +1,7 @@
+<!-- Launches an external RC package. -->
+<!-- ######################################### -->
+<launch>
+
+  <include file="$(find sbus_serial)/sbus_serial.launch"/>
+
+</launch>
