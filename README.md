@@ -1,6 +1,8 @@
 # unitair
 Unified single-board GNC-stack for UAVs. Check out [the wiki](https://github.com/Unitair-Autopilot/unitair/wiki) for more details.
 
+![Unitair flight demonstrations](https://raw.githubusercontent.com/wiki/Unitair-Autopilot/unitair/files/unitair_preview_collage.webp)
+
 ### Dependencies
 - **Firmware**
   - `sudo apt install libi2c-dev`
